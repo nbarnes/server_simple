@@ -3,7 +3,7 @@ require "uri"
 
 WEB_ROOT = "./public"
 
-CONTENT_TYPE_MAPPER = {
+CONTENT_TYPE_MAPPING = {
   'html' => 'text/html',
   'txt' => 'text/plain',
   'png' => 'image/png',
@@ -18,7 +18,18 @@ def content_type(path)
 end
 
 def requested_file(request_name)
-  # implementation TDB
+  request_URI = request_name.split(" ")[1]
+  path = URI.unescape(URI(request_URI).path)
+
+  clean = []
+
+  parts = path.split("/")
+  parts.each do |part|
+    next if part.empty? || part == '.'
+    part == '..' ? clean.pop : clean << part
+  end
+
+  File.join(WEB_ROOT, path)
 end
 
 server = TCPServer.new 1337
@@ -37,12 +48,12 @@ loop do
     File.open(path, "rb") do |file|
 
       client.puts "HTTP/1.1 200 OK"
-      client.puts "Content-Type: #{content_type}"
+      client.puts "Content-Type: #{content_type(file)}"
       client.puts "Content-Length: #{file.size}"
       client.puts "Connection: close"
       client.puts
 
-      IO.copy_stream(file, socket)
+      IO.copy_stream(file, client)
     end
   else
     message = "File not found/n"
