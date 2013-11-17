@@ -43,6 +43,7 @@ loop do
   puts request
 
   path = requested_file(request)
+  path = File.join(path, 'index.html') if File.directory?(path)
 
   if File.exist?(path) && !File.directory?(path)
     File.open(path, "rb") do |file|
